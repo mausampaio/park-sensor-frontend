@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Radar Ultrassom — ESP32</title>
+  <meta name="theme-color" content="#0f172a">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <h1>Radar Ultrassom — ESP32</h1>
+    <div class="conn">
+      <label>Endpoint SSE:</label>
+      <input id="endpoint" type="text" spellcheck="false" placeholder="http://localhost:8182/stream">
+      <button id="btnConnect">Conectar</button>
+      <button id="btnDisconnect" class="ghost">Desconectar</button>
+      <span id="status" class="status">desconectado</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="canvas-wrap">
+      <canvas id="radar" width="900" height="520"></canvas>
+      <div class="legend">
+        <span class="dot g"></span><span>Longe (&gt; 50cm)</span>
+        <span class="dot y"></span><span>Médio (20–50cm)</span>
+        <span class="dot r"></span><span>Perto (&le; 20cm)</span>
+      </div>
+    </section>
+
+    <section class="panels">
+      <div class="panel">
+        <h3>Frente</h3>
+        <div class="vals" id="frontVals"></div>
+      </div>
+      <div class="panel">
+        <h3>Traseira</h3>
+        <div class="vals" id="rearVals"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <span>Funciona offline (PWA). Dados ao vivo via SSE.</span>
+  </footer>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
