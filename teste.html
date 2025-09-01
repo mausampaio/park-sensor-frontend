@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="pt-BR">
+<meta charset="utf-8" />
+<title>Parking Aid – Carro vertical</title>
+<style>
+  :root{--bg:#0d0f12;--car:#aeb4bd}
+  html,body{height:100%;margin:0}
+  body{display:grid;place-items:center;background:var(--bg);color:#ddd;font:14px system-ui}
+  .wrap{width:min(92vw,820px);aspect-ratio:16/9}
+  svg{width:100%;height:100%}
+  .car{filter: drop-shadow(0 2px 4px rgba(0,0,0,.5));}
+  .ring path{stroke-width:0}
+</style>
+
+<div class="wrap">
+  <svg viewBox="-200 -140 400 280" aria-label="Parking aid">
+
+    <!-- CARRO VERTICAL (centro 0,0; frente = topo) -->
+    <g class="car">
+      <!-- carroceria -->
+      <rect x="-22" y="-65" width="44" height="130" rx="14" fill="var(--car)"/>
+      <!-- frisos/contorno -->
+      <rect x="-18" y="-60" width="36" height="120" rx="12" fill="#d9dde2"/>
+      <rect x="-16" y="-58" width="32" height="116" rx="10" fill="#b8bec7"/>
+      <!-- vidros (coluna central) -->
+      <rect x="-16" y="-30" width="32" height="60" rx="6" fill="#808a94"/>
+      <!-- para-brisa (topo) -->
+      <rect x="-16" y="-58" width="32" height="18" rx="8" fill="#9099a3"/>
+      <!-- vidro traseiro (base) -->
+      <rect x="-16" y="40" width="32" height="18" rx="8" fill="#9099a3"/>
+      <!-- detalhe de faróis (topo) -->
+      <rect x="-12" y="-65" width="24" height="6" rx="3" fill="#e9edf2" />
+      <!-- detalhe de lanternas (base) -->
+      <rect x="-12" y="59" width="24" height="6" rx="3" fill="#e9edf2" />
+    </g>
+
+    <!-- ARCO FRONTAL (topo) e TRASEIRO (base) -->
+    <g id="frontBack" class="ring"></g>
+    <g id="front" class="ring"></g>
+    <g id="rearBack"  class="ring"></g>
+    <g id="rear"  class="ring"></g>
+
+  </svg>
+</div>
+
+<script>
+  // 0° aponta para CIMA (frente do carro)
+  function polar(cx, cy, r, deg){
+    const a = (deg-90) * Math.PI/180;
+    return { x: cx + r*Math.cos(a), y: cy + r*Math.sin(a) };
+  }
+
+  function sectorPath(cx, cy, r0, r1, a0, a1){
+    const p0 = polar(cx,cy,r1,a0), p1 = polar(cx,cy,r1,a1);
+    const p2 = polar(cx,cy,r0,a1), p3 = polar(cx,cy,r0,a0);
+    const sweep = ((a1-a0)%360+360)%360;
+    const large = sweep > 180 ? 1 : 0;
+    return [
+      `M ${p0.x} ${p0.y}`,
+      `A ${r1} ${r1} 0 ${large} 1 ${p1.x} ${p1.y}`,
+      `L ${p2.x} ${p2.y}`,
+      `A ${r0} ${r0} 0 ${large} 0 ${p3.x} ${p3.y}`,
+      'Z'
+    ].join(' ');
+  }
+
+  function colorForDistance(distance){
+    if (distance == null) return {color: '#2a2f36', thickness: 60};
+    if (distance <= 20) return {color: '#ff2d20', thickness: 16};
+    if (distance <= 35) return {color: '#ff9f0a', thickness: 24};
+    if (distance <= 60) return {color: '#ffd60a', thickness: 36};
+    return {color: '#19c37d', thickness: 60};
+  }
+
+  // constrói semicírculo entre startDeg e endDeg
+  function buildSemiRing(container, opts) {
+  const {startDeg, endDeg, segments=4, rInner=80, thickness=24, gapDeg=6} = opts;
+  const rOuter = rInner + thickness;
+  const sweep  = endDeg - startDeg;
+  const step   = sweep / segments;
+  const nodes  = [];
+  for (let i=0;i<segments;i++){
+    const a0 = startDeg + i*step + gapDeg/2;
+    const a1 = startDeg + (i+1)*step - gapDeg/2;
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.dataset.a0 = a0; // guardando ângulos
+    path.dataset.a1 = a1;
+    path.dataset.rInner = rInner;
+    path.setAttribute('d', sectorPath(0,0,rInner,rOuter,a0,a1));
+    path.setAttribute('fill', '#2a2f36');
+    container.appendChild(path);
+    nodes.push(path);
+  }
+
+  // função para atualizar depois
+  nodes.updateThickness = function(nodeId, newThickness){
+    const path = nodes[nodeId];
+    if (path) {
+      const a0 = +path.dataset.a0, a1 = +path.dataset.a1;
+      const rInner = +path.dataset.rInner;
+      const rOuter = rInner + newThickness;
+      path.setAttribute('d', sectorPath(0,0,rInner,rOuter,a0,a1));
+    }
+  };
+
+  return nodes;
+}
+
+  const frontBackEl = document.getElementById('frontBack');
+  const rearBackEl  = document.getElementById('rearBack');
+  const frontEl = document.getElementById('front');
+  const rearEl  = document.getElementById('rear');
+
+  // Frente (TOP): 0°→180° ; Traseira (BASE): 180°→360°
+  buildSemiRing(frontBackEl, {startDeg:300, endDeg:420, segments:4, thickness: 60});
+  buildSemiRing(rearBackEl, {startDeg:120, endDeg:240, segments:4, thickness: 60});
+  const frontSectors = buildSemiRing(frontEl, {startDeg:300, endDeg:420, segments:4});
+  const rearSectors  = buildSemiRing(rearEl , {startDeg:120, endDeg:240, segments:4});
+
+  function paint(nodes, distances, sensorType){
+    let sensorDistances = distances;
+
+    if (sensorType === 'rear') {
+      sensorDistances = sensorDistances.reverse();
+    }
+
+    nodes.forEach((n,i)=> {
+      n.setAttribute('fill', colorForDistance(sensorDistances?.[i]).color)
+      nodes.updateThickness(i, colorForDistance(sensorDistances?.[i]).thickness)
+    });
+  }
+
+  // API pública para integrar com seus sensores
+  window.updateSensors = function(front, rear){
+    paint(frontSectors, front, 'front');
+    paint(rearSectors , rear, 'rear');
+  };
+
+  // demo
+  updateSensors([80,55,36,22], [90,70,40,18]);
+</script>
+</html>
