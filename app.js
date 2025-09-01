@@ -7,7 +7,7 @@ const ctx = canvas.getContext('2d');
 const frontValsEl = document.getElementById('frontVals');
 const rearValsEl  = document.getElementById('rearVals');
 const carImg = new Image();
-carImg.src = 'car.svg';
+carImg.src = 'car.png';
 
 let es = null;
 let state = {
@@ -83,7 +83,11 @@ function draw(){
   // Carro (imagem SVG)
   const carW = 260, carH = 460, carX = (w-carW)/2, carY = (h-carH)/2;
   if (carImg.complete) {
-    ctx.drawImage(carImg, carX, carY, carW, carH);
+    ctx.save();
+    ctx.translate(carX + carW/2, carY + carH/2);
+    ctx.rotate(-Math.PI/2);
+    ctx.drawImage(carImg, -carH/2, -carW/2, carH, carW);
+    ctx.restore();
   }
 
   // Desenhar sensores (4 frente, 4 traseira)
@@ -94,12 +98,13 @@ function draw(){
 }
 
 function drawSensors(side, values, carX, carY, carW, carH){
-  const segments = 4;
-  const centerX = carX + carW / 2;
-  const baseY   = side === 'front' ? carY : carY + carH;
-  const segAngle = Math.PI / segments; // divide semicirculo em 4
+  const segments = values.length;
+  const baseY = side === 'front' ? carY : carY + carH;
+  const spacing = carW / (segments + 1);
   const maxLen = 160; // raio extra máximo
   const baseRadius = 40; // distância inicial do parachoque
+  const halfAngle = Math.PI / 4; // 90° de abertura
+  const baseAngle = side === 'front' ? 3 * Math.PI / 2 : Math.PI / 2;
 
   for (let i = 0; i < segments; i++){
     const cm = values[i];
@@ -108,20 +113,26 @@ function drawSensors(side, values, carX, carY, carW, carH){
     const len = maxLen * (1 - Math.min(1, (cm ?? 100)/100));
     const outerR = baseRadius + len;
     const innerR = baseRadius;
-    const start = side === 'front'
-      ? Math.PI - segAngle * i
-      : segAngle * i;
-    const end = side === 'front'
-      ? Math.PI - segAngle * (i + 1)
-      : segAngle * (i + 1);
+    const cx = carX + spacing * (i + 1);
+
+    let start, end, ccw;
+    if (side === 'front') {
+      start = baseAngle + halfAngle;
+      end = baseAngle - halfAngle;
+      ccw = true;
+    } else {
+      start = baseAngle - halfAngle;
+      end = baseAngle + halfAngle;
+      ccw = false;
+    }
 
     ctx.save();
     ctx.globalAlpha = 0.25 + 0.75 * alpha;
     ctx.fillStyle = col;
 
     ctx.beginPath();
-    ctx.arc(centerX, baseY, outerR, start, end, side === 'front');
-    ctx.arc(centerX, baseY, innerR, end, start, !(side === 'front'));
+    ctx.arc(cx, baseY, outerR, start, end, ccw);
+    ctx.arc(cx, baseY, innerR, end, start, !ccw);
     ctx.closePath();
     ctx.fill();
 
@@ -129,8 +140,8 @@ function drawSensors(side, values, carX, carY, carW, carH){
       ctx.globalAlpha = 0.9;
       ctx.fillStyle = '#ff3b30';
       ctx.beginPath();
-      ctx.arc(centerX, baseY, innerR + 10, start, end, side === 'front');
-      ctx.arc(centerX, baseY, innerR, end, start, !(side === 'front'));
+      ctx.arc(cx, baseY, innerR + 10, start, end, ccw);
+      ctx.arc(cx, baseY, innerR, end, start, !ccw);
       ctx.closePath();
       ctx.fill();
     }
