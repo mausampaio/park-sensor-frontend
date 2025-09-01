@@ -6,6 +6,8 @@ const canvas = document.getElementById('radar');
 const ctx = canvas.getContext('2d');
 const frontValsEl = document.getElementById('frontVals');
 const rearValsEl  = document.getElementById('rearVals');
+const carImg = new Image();
+carImg.src = 'car.svg';
 
 let es = null;
 let state = {
@@ -78,13 +80,11 @@ function draw(){
   ctx.lineWidth = 1;
   ctx.strokeRect(20, 20, w-40, h-40);
 
-  // Carro
+  // Carro (imagem SVG)
   const carW = 260, carH = 460, carX = (w-carW)/2, carY = (h-carH)/2;
-  ctx.fillStyle = '#101827';
-  roundRect(ctx, carX, carY, carW, carH, 24);
-  ctx.fillStyle = '#0b1323'; roundRect(ctx, carX+16, carY+40, carW-32, carH-80, 18); // “vidro”
-  ctx.fillStyle = '#0e1526'; roundRect(ctx, carX+30, carY+360, carW-60, 30, 10); // parachoque traseiro
-  ctx.fillStyle = '#0e1526'; roundRect(ctx, carX+30, carY+30,  carW-60, 30, 10); // parachoque dianteiro
+  if (carImg.complete) {
+    ctx.drawImage(carImg, carX, carY, carW, carH);
+  }
 
   // Desenhar sensores (4 frente, 4 traseira)
   drawSensors('front', state.front, carX, carY, carW, carH);
@@ -95,67 +95,49 @@ function draw(){
 
 function drawSensors(side, values, carX, carY, carW, carH){
   const segments = 4;
-  const half = carW/2;
-  const segW = half / segments;
-  const centerX = carX + carW/2;
-  const frontY = carY - 6;
-  const rearY  = carY + carH + 6;
+  const centerX = carX + carW / 2;
+  const baseY   = side === 'front' ? carY : carY + carH;
+  const segAngle = Math.PI / segments; // divide semicirculo em 4
+  const maxLen = 160; // raio extra máximo
+  const baseRadius = 40; // distância inicial do parachoque
 
-  for (let i=0; i<segments; i++){
+  for (let i = 0; i < segments; i++){
     const cm = values[i];
     const col = colorForCm(cm);
     const alpha = alphaForCm(cm);
-
-    // Quanto maior a proximidade, mais comprida a barra
-    const maxLen = 180; // comprimento máximo da barra/“arco”
-    const len = Math.max(20, maxLen * (1 - Math.min(1, (cm ?? 100)/100)));
-
-    // X base de cada segmento (esquerda -> direita)
-    const leftX = (centerX - half) + segW*i;
-    const rightX = leftX + segW;
+    const len = maxLen * (1 - Math.min(1, (cm ?? 100)/100));
+    const outerR = baseRadius + len;
+    const innerR = baseRadius;
+    const start = side === 'front'
+      ? Math.PI - segAngle * i
+      : segAngle * i;
+    const end = side === 'front'
+      ? Math.PI - segAngle * (i + 1)
+      : segAngle * (i + 1);
 
     ctx.save();
-    ctx.globalAlpha = 0.25 + 0.75*alpha;
+    ctx.globalAlpha = 0.25 + 0.75 * alpha;
     ctx.fillStyle = col;
 
-    // Frente: desenha fora do parachoque superior
-    if (side === 'front'){
-      // retângulo arredondado representando o "arco"
-      roundRect(ctx, leftX+6, frontY - len, segW-12, len, 10, true);
-      // luz vermelha contínua se muito perto
-      if (cm != null && cm <= 20){
-        ctx.globalAlpha = 0.9;
-        ctx.fillStyle = '#ff3b30';
-        roundRect(ctx, leftX+6, frontY-18, segW-12, 12, 6, true);
-      }
-    } else {
-      // Traseira: fora do parachoque inferior
-      roundRect(ctx, leftX+6, rearY, segW-12, len, 10, true);
-      if (cm != null && cm <= 20){
-        ctx.globalAlpha = 0.9;
-        ctx.fillStyle = '#ff3b30';
-        roundRect(ctx, leftX+6, rearY+6, segW-12, 12, 6, true);
-      }
+    ctx.beginPath();
+    ctx.arc(centerX, baseY, outerR, start, end, side === 'front');
+    ctx.arc(centerX, baseY, innerR, end, start, !(side === 'front'));
+    ctx.closePath();
+    ctx.fill();
+
+    if (cm != null && cm <= 20){
+      ctx.globalAlpha = 0.9;
+      ctx.fillStyle = '#ff3b30';
+      ctx.beginPath();
+      ctx.arc(centerX, baseY, innerR + 10, start, end, side === 'front');
+      ctx.arc(centerX, baseY, innerR, end, start, !(side === 'front'));
+      ctx.closePath();
+      ctx.fill();
     }
     ctx.restore();
   }
 }
 
-function roundRect(ctx, x, y, w, h, r, fill=true){
-  if (typeof r === 'number') r = {tl:r,tr:r,br:r,bl:r};
-  ctx.beginPath();
-  ctx.moveTo(x + r.tl, y);
-  ctx.lineTo(x + w - r.tr, y);
-  ctx.quadraticCurveTo(x + w, y, x + w, y + r.tr);
-  ctx.lineTo(x + w, y + h - r.br);
-  ctx.quadraticCurveTo(x + w, y + h, x + w - r.br, y + h);
-  ctx.lineTo(x + r.bl, y + h);
-  ctx.quadraticCurveTo(x, y + h, x, y + h - r.bl);
-  ctx.lineTo(x, y + r.tl);
-  ctx.quadraticCurveTo(x, y, x + r.tl, y);
-  ctx.closePath();
-  if (fill) ctx.fill(); else ctx.stroke();
-}
 
 function updateTiles(){
   const mk = (arr)=>arr.map((v,i)=>{
