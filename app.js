@@ -6,6 +6,8 @@ const frontBackEl = document.getElementById('frontBack');
 const rearBackEl = document.getElementById('rearBack');
 const frontEl = document.getElementById('front');
 const rearEl = document.getElementById('rear');
+const frontVals = document.getElementById('frontVals');
+const rearVals = document.getElementById('rearVals');
 
 let es = null;
 let state = {
@@ -49,6 +51,7 @@ function connect() {
         if (typeof arr[i] === 'number') state[side][i] = arr[i];
       }
       state.lastMessageAt = Date.now();
+      updateTiles();
       updateSensors(state.front, state.rear);
     } catch (err) {
       console.warn('JSON inválido:', e.data, err);
@@ -147,6 +150,25 @@ function paint(nodes, distances, sensorType) {
     nodes.updateThickness(i, colorForDistance(sensorDistances?.[i]).thickness);
   });
 }
+
+function updateTiles() {
+  const mk = (arr) =>
+    arr
+      .map((v, i) => {
+        const col = colorForDistance(v).color;
+        const val = v == null ? '—' : `${v} cm`;
+        return `
+          <div class="tile">
+            <div class="cm" style="color:${col}">${val}</div>
+            <div class="lbl">S${i + 1}</div>
+          </div>`;
+      })
+      .join('');
+  frontVals.innerHTML = mk(state.front);
+  rearVals.innerHTML = mk(state.rear);
+}
+
+updateTiles();
 
 // API pública para integrar com seus sensores
 window.updateSensors = function (front, rear) {
