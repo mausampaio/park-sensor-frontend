@@ -98,7 +98,7 @@ export default function useGetSensorsValues() {
   }
 
   function colorForDistance(distance: number | null) {
-    if (distance == null) return {color: '#2a2f36', thickness: 60};
+    if (distance == null) return {color: '#e5e7eb', thickness: 60};
     if (distance <= 20) return {color: '#ff2d20', thickness: 16};
     if (distance <= 35) return {color: '#ff9f0a', thickness: 24};
     if (distance <= 60) return {color: '#ffd60a', thickness: 36};

@@ -1,5 +1,6 @@
-import car from '../assets/car.svg';
+import {useMantineTheme} from '@mantine/core';
 import type {SensorNode, SensorNodes} from '../types/sensorTypes';
+import Car from './Car';
 
 export default function SensorDraw({
   sensorNodes,
@@ -10,10 +11,12 @@ export default function SensorDraw({
   buildSemiRingFrontBack: () => SensorNode[];
   buildSemiRingRearBack: () => SensorNode[];
 }) {
-  // transform = 'scale(0.046) rotate(90) translate(-1500, -700)';
+  const theme = useMantineTheme();
+
   return (
     <svg className="csvgCar" viewBox="-200 -140 400 280" aria-label="Parking aid">
-      <image href={car} transform="scale(0.35) translate(-90, -200)" />
+      {/* <image href={car} transform="scale(0.35) translate(-90, -200)" /> */}
+      <Car style={{translate: '-32px -70px', scale: '0.35', fill: theme.colors.dark[7]}} />
       <g id="frontBack" className="ring">
         {buildSemiRingFrontBack().map((node, index) => (
           <path key={index} d={node.path.d} fill={node.path.fill} />

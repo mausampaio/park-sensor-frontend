@@ -1,6 +1,6 @@
-import { MantineProvider } from '@mantine/core';
+import {MantineProvider} from '@mantine/core';
 import '@mantine/core/styles.css';
-import { Toaster } from 'react-hot-toast';
+import {Toaster} from 'react-hot-toast';
 import './App.css';
 import Container from './components/Container';
 

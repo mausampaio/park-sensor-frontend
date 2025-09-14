@@ -1,10 +1,24 @@
-import {AppShell, Button, Drawer, Group, TextInput} from '@mantine/core';
+import {
+  AppShell,
+  Box,
+  Button,
+  Drawer,
+  Grid,
+  Group,
+  Stack,
+  TextInput,
+  useMantineColorScheme,
+  useMantineTheme,
+} from '@mantine/core';
 import {useDisclosure} from '@mantine/hooks';
 import useGetSensorsValues from '../hooks/useGetSensorsValues';
+import DotLegend from './DotLegend';
 import SensorDraw from './SensorDraw';
 
 export default function Container() {
   const [opened, {open, close}] = useDisclosure();
+  const {toggleColorScheme} = useMantineColorScheme();
+  const theme = useMantineTheme();
 
   const {
     endpoint,
@@ -18,68 +32,65 @@ export default function Container() {
 
   return (
     <>
-      <AppShell
-        header={{height: 60}}
-        navbar={{width: 300, breakpoint: 'sm', collapsed: {desktop: true, mobile: !opened}}}
-        padding="md"
-      >
+      <AppShell header={{height: 70}} footer={{height: 60}}>
         <AppShell.Header>
-          <Group justify="space-between" style={{flex: 1, padding: '0.5rem', height: '100%'}}>
+          <Group justify="space-between" p="md" h="100%" flex={1}>
             Radar Ultrassom — ESP32
-            <Button onClick={open}>Open Drawer</Button>
+            <Button onClick={open}>Configurações</Button>
           </Group>
         </AppShell.Header>
 
         <AppShell.Main>
-          <section className="canvas-wrap">
-            <div className="wrap">
-              <SensorDraw
-                sensorNodes={sensorNodes}
-                buildSemiRingFrontBack={buildSemiRingFrontBack}
-                buildSemiRingRearBack={buildSemiRingRearBack}
-              />
-            </div>
-            <div className="legend">
-              <span className="dot longe"></span>
-              <span>Longe (&gt; 60cm)</span>
-              <span className="dot medio"></span>
-              <span>Médio (35–60cm)</span>
-              <span className="dot perto"></span>
-              <span>Perto (20–35cm)</span>
-              <span className="dot muito-perto"></span>
-              <span>Muito perto (&le; 20cm)</span>
-            </div>
-          </section>
-          <section className="panels">
-            <div className="panel">
-              <h3>Frente</h3>
-              <div className="vals" id="frontVals">
-                {sensorNodes.frontSectors.map((node, index) => (
-                  <div className="tile" key={index}>
-                    <div className="cm" style={{color: node.path.fill}}>
-                      {node.distance ?? '—'}
-                    </div>
-                    <div className="lbl">S{index + 1}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="panel">
-              <h3>Traseira</h3>
-              <div className="vals" id="rearVals">
-                {sensorNodes.rearSectors.map((node, index) => (
-                  <div className="tile" key={index}>
-                    <div className="cm" style={{color: node.path.fill}}>
-                      {node.distance ?? '—'}
-                    </div>
-                    <div className="lbl">S{index + 1}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </section>
+          <Grid p="md">
+            <Grid.Col span={8}></Grid.Col>
+            <Grid.Col span={4}>
+              <Grid>
+                <Grid.Col span={12}>
+                  <SensorDraw
+                    sensorNodes={sensorNodes}
+                    buildSemiRingFrontBack={buildSemiRingFrontBack}
+                    buildSemiRingRearBack={buildSemiRingRearBack}
+                  />
+                </Grid.Col>
+                <Grid.Col span={12}>
+                  <Stack gap="xs">
+                    <DotLegend label="Longe (&gt; 60cm)" bgColor={theme.colors.green[5]} />
+                    <DotLegend label="Médio (35–60cm)" bgColor={theme.colors.yellow[5]} />
+                    <DotLegend label="Perto (20–35cm)" bgColor={theme.colors.orange[5]} />
+                    <DotLegend label="Muito perto (&le; 20cm)" bgColor={theme.colors.red[5]} />
+                  </Stack>
+                </Grid.Col>
+                <Grid.Col span={12}>
+                  <h3>Frente</h3>
+                  <Box>
+                    {sensorNodes.frontSectors.map((node, index) => (
+                      <div className="tile" key={index}>
+                        <div className="cm" style={{color: node.path.fill}}>
+                          {node.distance ?? '—'}
+                        </div>
+                        <div className="lbl">S{index + 1}</div>
+                      </div>
+                    ))}
+                  </Box>
+                </Grid.Col>
+                <Grid.Col span={12}>
+                  <h3>Traseira</h3>
+                  <Box>
+                    {sensorNodes.rearSectors.map((node, index) => (
+                      <div className="tile" key={index}>
+                        <div className="cm" style={{color: node.path.fill}}>
+                          {node.distance ?? '—'}
+                        </div>
+                        <div className="lbl">S{index + 1}</div>
+                      </div>
+                    ))}
+                  </Box>
+                </Grid.Col>
+              </Grid>
+            </Grid.Col>
+          </Grid>
         </AppShell.Main>
-        <AppShell.Footer>
+        <AppShell.Footer p="md">
           <span>Funciona offline (PWA). Dados ao vivo via SSE.</span>
         </AppShell.Footer>
       </AppShell>
@@ -108,6 +119,7 @@ export default function Container() {
         <span id="status" className="status">
           {status}
         </span>
+        <Button onClick={toggleColorScheme}>Trocar Tema</Button>
       </Drawer>
     </>
   );
