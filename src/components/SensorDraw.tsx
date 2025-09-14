@@ -1,5 +1,5 @@
 import car from '../assets/car.svg';
-import type { SensorNode, SensorNodes } from '../hooks/useGetSensorsValues';
+import type {SensorNode, SensorNodes} from '../types/sensorTypes';
 
 export default function SensorDraw({
   sensorNodes,

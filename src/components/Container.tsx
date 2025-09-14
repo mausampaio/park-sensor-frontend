@@ -62,7 +62,7 @@ export default function Container() {
             <div className="vals" id="frontVals">
               {sensorNodes.frontSectors.map((node, index) => (
                 <div className="tile" key={index}>
-                  <div className="cm" style={{ color: node.path.fill }}>
+                  <div className="cm" style={{color: node.path.fill}}>
                     {node.distance ?? '—'}
                   </div>
                   <div className="lbl">S{index + 1}</div>
@@ -75,7 +75,7 @@ export default function Container() {
             <div className="vals" id="rearVals">
               {sensorNodes.rearSectors.map((node, index) => (
                 <div className="tile" key={index}>
-                  <div className="cm" style={{ color: node.path.fill }}>
+                  <div className="cm" style={{color: node.path.fill}}>
                     {node.distance ?? '—'}
                   </div>
                   <div className="lbl">S{index + 1}</div>

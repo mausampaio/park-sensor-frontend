@@ -1,35 +1,6 @@
-import { useState } from 'react';
+import {useState} from 'react';
 import toast from 'react-hot-toast';
-
-export interface SensorMessage {
-  seq: number;
-  side: 'front' | 'rear';
-  age: number;
-  cm: (number | null)[];
-}
-
-export interface SemiCiclesProps {
-  startDeg: number;
-  endDeg: number;
-  segments: number;
-  rInner?: number;
-  gapDeg?: number;
-}
-
-export interface SvgPathProps {
-  d: string;
-  fill: string;
-}
-
-export interface SensorNode {
-  path: SvgPathProps;
-  distance?: number | null;
-}
-
-export interface SensorNodes {
-  frontSectors: SensorNode[];
-  rearSectors: SensorNode[];
-}
+import type {SemiCiclesProps, SensorMessage, SensorNode, SensorNodes} from '../types/sensorTypes';
 
 export default function useGetSensorsValues() {
   let eventSource: EventSource | null = null;
@@ -87,8 +58,8 @@ export default function useGetSensorsValues() {
 
         setSensorNodes((prevNodes) => {
           return message.side === 'front'
-            ? { ...prevNodes, frontSectors: buildSemiRingFront(distances) }
-            : { ...prevNodes, rearSectors: buildSemiRingRear(distances) };
+            ? {...prevNodes, frontSectors: buildSemiRingFront(distances)}
+            : {...prevNodes, rearSectors: buildSemiRingRear(distances)};
         });
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
       } catch (_error) {
@@ -107,7 +78,7 @@ export default function useGetSensorsValues() {
 
   function polar(cx: number, cy: number, r: number, deg: number) {
     const a = ((deg - 90) * Math.PI) / 180;
-    return { x: cx + r * Math.cos(a), y: cy + r * Math.sin(a) };
+    return {x: cx + r * Math.cos(a), y: cy + r * Math.sin(a)};
   }
 
   function sectorPath(cx: number, cy: number, r0: number, r1: number, a0: number, a1: number) {
@@ -127,22 +98,22 @@ export default function useGetSensorsValues() {
   }
 
   function colorForDistance(distance: number | null) {
-    if (distance == null) return { color: '#2a2f36', thickness: 60 };
-    if (distance <= 20) return { color: '#ff2d20', thickness: 16 };
-    if (distance <= 35) return { color: '#ff9f0a', thickness: 24 };
-    if (distance <= 60) return { color: '#ffd60a', thickness: 36 };
-    return { color: '#19c37d', thickness: 60 };
+    if (distance == null) return {color: '#2a2f36', thickness: 60};
+    if (distance <= 20) return {color: '#ff2d20', thickness: 16};
+    if (distance <= 35) return {color: '#ff9f0a', thickness: 24};
+    if (distance <= 60) return {color: '#ffd60a', thickness: 36};
+    return {color: '#19c37d', thickness: 60};
   }
 
   function buildSemiRing(opts: SemiCiclesProps, distanceValues?: (number | null)[]): SensorNode[] {
-    const { startDeg, endDeg, segments = 4, rInner = 80, gapDeg = 6 } = opts;
+    const {startDeg, endDeg, segments = 4, rInner = 80, gapDeg = 6} = opts;
     const sweep = endDeg - startDeg;
     const step = sweep / segments;
     const nodes: SensorNode[] = [];
 
     for (let i = 0; i < segments; i++) {
       const distance = distanceValues?.[i] ?? null;
-      const { color, thickness } = colorForDistance(distance);
+      const {color, thickness} = colorForDistance(distance);
       const rOuter = rInner + thickness;
       const a0 = startDeg + i * step + gapDeg / 2;
       const a1 = startDeg + (i + 1) * step - gapDeg / 2;
@@ -159,18 +130,18 @@ export default function useGetSensorsValues() {
   }
 
   function buildSemiRingFront(distanceValues: (number | null)[]) {
-    return buildSemiRing({ startDeg: 300, endDeg: 420, segments: 4 }, distanceValues);
+    return buildSemiRing({startDeg: 300, endDeg: 420, segments: 4}, distanceValues);
   }
 
   function buildSemiRingRear(distanceValues: (number | null)[]) {
-    return buildSemiRing({ startDeg: 120, endDeg: 240, segments: 4 }, distanceValues);
+    return buildSemiRing({startDeg: 120, endDeg: 240, segments: 4}, distanceValues);
   }
 
   function buildSemiRingFrontBack() {
-    return buildSemiRing({ startDeg: 300, endDeg: 420, segments: 4 });
+    return buildSemiRing({startDeg: 300, endDeg: 420, segments: 4});
   }
   function buildSemiRingRearBack() {
-    return buildSemiRing({ startDeg: 120, endDeg: 240, segments: 4 });
+    return buildSemiRing({startDeg: 120, endDeg: 240, segments: 4});
   }
 
   return {
@@ -178,7 +149,7 @@ export default function useGetSensorsValues() {
     disconnect,
     status,
     sensorsState,
-    endpoint: { value: endpoint, setValue: setEndpoint },
+    endpoint: {value: endpoint, setValue: setEndpoint},
     buildSemiRing,
     colorForDistance,
     sensorNodes,
